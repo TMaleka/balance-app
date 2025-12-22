@@ -1,0 +1,303 @@
+import React, { useState } from 'react';
+import { supabase } from '../supabaseClient';
+import { AlertCircle, CheckCircle } from 'lucide-react';
+import { useNotificationHelpers } from './NotificationSystem';
+import { safeAsync, getUserMessage } from '../utils/errorHandling';
+import BalanceLogo from '../assets/BalanceLogo';
+
+export default function Auth() {
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const { showSuccess, showError, showWarning } = useNotificationHelpers();
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validation
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+    const trimmedPhoneNumber = phoneNumber.trim();
+    
+    if (!trimmedEmail) {
+      showWarning('Email Required', 'Please enter your email address');
+      return;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      showWarning('Invalid Email', 'Please enter a valid email address');
+      return;
+    }
+    
+    if (isSignUp && !trimmedPhoneNumber) {
+      showWarning('Phone Number Required', 'Please enter your phone number');
+      return;
+    }
+    
+    if (isSignUp && !/^[\+]?[0-9\s\-\(\)]{10,15}$/.test(trimmedPhoneNumber)) {
+      showWarning('Invalid Phone Number', 'Please enter a valid phone number (10-15 digits)');
+      return;
+    }
+    
+    if (!trimmedPassword) {
+      showWarning('Password Required', 'Please enter your password');
+      return;
+    }
+    
+    if (isSignUp && trimmedPassword.length < 6) {
+      showWarning('Password Too Short', 'Password must be at least 6 characters long');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    const result = await safeAsync(async () => {
+      let response;
+      if (isSignUp) {
+        // Check if email already exists
+        const { data: existingEmail } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', trimmedEmail)
+          .single();
+        
+        if (existingEmail) {
+          throw new Error('This email address is already registered');
+        }
+        
+        // Check if phone number already exists
+        const { data: existingPhone } = await supabase
+          .from('users')
+          .select('id')
+          .eq('phone_number', trimmedPhoneNumber)
+          .single();
+        
+        if (existingPhone) {
+          throw new Error('This phone number is already registered');
+        }
+        
+        response = await supabase.auth.signUp({ 
+          email: trimmedEmail, 
+          password: trimmedPassword,
+          options: {
+            data: {
+              phone_number: trimmedPhoneNumber
+            }
+          }
+        });
+        if (response.error) throw response.error;
+        
+        // Store phone number in users table
+        if (response.data.user) {
+          await supabase
+            .from('users')
+            .update({ phone_number: trimmedPhoneNumber })
+            .eq('id', response.data.user.id);
+        }
+        
+        return { type: 'signup', data: response.data };
+      } else {
+        response = await supabase.auth.signInWithPassword({ 
+          email: trimmedEmail, 
+          password: trimmedPassword 
+        });
+        if (response.error) throw response.error;
+        return { type: 'signin', data: response.data };
+      }
+    }, undefined, 'handleAuth');
+    
+    setLoading(false);
+    
+    if (result) {
+      if (result.type === 'signup') {
+        showSuccess('Account Created', 'Welcome to Balance! Your account is ready.');
+      } else {
+        showSuccess('Welcome Back', 'You have been signed in successfully');
+      }
+    } else {
+      const errorMessage = getUserMessage('Authentication failed');
+      setError(errorMessage);
+      showError('Authentication Failed', errorMessage);
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, var(--amex-blue) 0%, var(--amex-navy) 100%)', padding: 'var(--amex-space-4)' }}>
+      {/* Balance Logo */}
+      <div style={{ textAlign: 'center', marginBottom: 'var(--amex-space-8)' }}>
+        <div style={{ fontSize: 'var(--amex-font-size-sm)', marginBottom: 'var(--amex-space-2)', color: 'white', opacity: 0.9 }}>
+          Welcome to
+        </div>
+        <div style={{ fontSize: 'var(--amex-font-size-4xl)', fontWeight: 'var(--amex-font-weight-bold)', color: 'white', letterSpacing: '0.1em' }}>
+          BALANCE
+        </div>
+      </div>
+
+      {/* Balance Logo */}
+      <div style={{ marginBottom: 'var(--amex-space-8)' }}>
+        <BalanceLogo size={80} />
+      </div>
+
+      {/* Auth Form Card */}
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 'var(--amex-radius-xl)', 
+        padding: 'var(--amex-space-6)',
+        width: '100%',
+        maxWidth: '400px',
+        boxShadow: 'var(--amex-shadow-xl)'
+      }}>
+        <h2 style={{ 
+          fontSize: 'var(--amex-font-size-2xl)', 
+          fontWeight: 'var(--amex-font-weight-bold)',
+          color: 'var(--amex-gray-900)',
+          marginBottom: 'var(--amex-space-2)',
+          textAlign: 'center'
+        }}>
+          {isSignUp ? 'Create Account' : 'Sign In'}
+        </h2>
+        <p style={{ 
+          fontSize: 'var(--amex-font-size-sm)', 
+          color: 'var(--amex-gray-600)',
+          marginBottom: 'var(--amex-space-6)',
+          textAlign: 'center'
+        }}>
+          {isSignUp ? 'Join Balance and start managing your money' : 'Welcome back to Balance'}
+        </p>
+
+        {/* Alerts */}
+        {error && (
+          <div style={{
+            background: 'rgba(230, 57, 70, 0.1)',
+            padding: 'var(--amex-space-3)',
+            borderRadius: 'var(--amex-radius-md)',
+            marginBottom: 'var(--amex-space-4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--amex-space-2)'
+          }}>
+            <AlertCircle style={{ width: '20px', height: '20px', color: 'var(--amex-red)', flexShrink: 0 }} />
+            <div style={{ fontSize: 'var(--amex-font-size-sm)', color: 'var(--amex-red)' }}>{error}</div>
+          </div>
+        )}
+        {message && (
+          <div style={{
+            background: 'rgba(0, 195, 137, 0.1)',
+            padding: 'var(--amex-space-3)',
+            borderRadius: 'var(--amex-radius-md)',
+            marginBottom: 'var(--amex-space-4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--amex-space-2)'
+          }}>
+            <CheckCircle style={{ width: '20px', height: '20px', color: 'var(--amex-green)', flexShrink: 0 }} />
+            <div style={{ fontSize: 'var(--amex-font-size-sm)', color: 'var(--amex-green)' }}>{message}</div>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleAuth}>
+          <div style={{ marginBottom: 'var(--amex-space-4)' }}>
+            <label htmlFor="email" className="amex-label">Email Address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="amex-input"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          {isSignUp && (
+            <div style={{ marginBottom: 'var(--amex-space-4)' }}>
+              <label htmlFor="phoneNumber" className="amex-label">Phone Number</label>
+              <input
+                id="phoneNumber"
+                name="phoneNumber"
+                type="tel"
+                autoComplete="tel"
+                required
+                className="amex-input"
+                placeholder="+27 12 345 6789"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+              />
+            </div>
+          )}
+
+          <div style={{ marginBottom: 'var(--amex-space-6)' }}>
+            <label htmlFor="password" className="amex-label">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="amex-input"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="amex-btn amex-btn-primary"
+            style={{ width: '100%' }}
+          >
+            {loading ? (
+              <div style={{
+                width: '20px',
+                height: '20px',
+                border: '2px solid rgba(255,255,255,0.3)',
+                borderTopColor: 'white',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite'
+              }}></div>
+            ) : (
+              isSignUp ? 'Create Account' : 'Sign In'
+            )}
+          </button>
+        </form>
+
+        {/* Toggle */}
+        <div style={{ 
+          textAlign: 'center', 
+          marginTop: 'var(--amex-space-4)',
+          fontSize: 'var(--amex-font-size-sm)',
+          color: 'var(--amex-gray-600)'
+        }}>
+          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+          <span 
+            onClick={() => setIsSignUp(!isSignUp)}
+            style={{ 
+              color: 'var(--amex-blue)', 
+              fontWeight: 'var(--amex-font-weight-semibold)',
+              cursor: 'pointer'
+            }}
+          >
+            {isSignUp ? 'Sign In' : 'Sign Up'}
+          </span>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+

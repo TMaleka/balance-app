@@ -1,0 +1,589 @@
+/* ============================================
+   AMEX DESIGN SYSTEM - Balance App
+   Inspired by American Express Mobile App
+   ============================================ */
+
+/* ============================================
+   DESIGN TOKENS
+   ============================================ */
+
+:root {
+  /* Primary Colors - Amex Blue */
+  --amex-blue: #006FCF;
+  --amex-blue-dark: #005BA8;
+  --amex-blue-light: #E8F4FD;
+  --amex-blue-hover: #0080E8;
+  
+  /* Secondary Colors */
+  --amex-navy: #00175A;
+  --amex-teal: #00B4D8;
+  --amex-green: #00C389;
+  --amex-red: #E63946;
+  --amex-orange: #FF6B35;
+  
+  /* Neutral Colors */
+  --amex-white: #FFFFFF;
+  --amex-gray-50: #F8F9FA;
+  --amex-gray-100: #F1F3F5;
+  --amex-gray-200: #E9ECEF;
+  --amex-gray-300: #DEE2E6;
+  --amex-gray-400: #CED4DA;
+  --amex-gray-500: #ADB5BD;
+  --amex-gray-600: #6C757D;
+  --amex-gray-700: #495057;
+  --amex-gray-800: #343A40;
+  --amex-gray-900: #212529;
+  --amex-black: #000000;
+  
+  /* Typography */
+  --amex-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  --amex-font-size-xs: 0.75rem;    /* 12px */
+  --amex-font-size-sm: 0.875rem;   /* 14px */
+  --amex-font-size-base: 1rem;     /* 16px */
+  --amex-font-size-lg: 1.125rem;   /* 18px */
+  --amex-font-size-xl: 1.25rem;    /* 20px */
+  --amex-font-size-2xl: 1.5rem;    /* 24px */
+  --amex-font-size-3xl: 1.875rem;  /* 30px */
+  --amex-font-size-4xl: 2.25rem;   /* 36px */
+  
+  --amex-font-weight-normal: 400;
+  --amex-font-weight-medium: 500;
+  --amex-font-weight-semibold: 600;
+  --amex-font-weight-bold: 700;
+  
+  /* Spacing */
+  --amex-space-1: 0.25rem;   /* 4px */
+  --amex-space-2: 0.5rem;    /* 8px */
+  --amex-space-3: 0.75rem;   /* 12px */
+  --amex-space-4: 1rem;      /* 16px */
+  --amex-space-5: 1.25rem;   /* 20px */
+  --amex-space-6: 1.5rem;    /* 24px */
+  --amex-space-8: 2rem;      /* 32px */
+  --amex-space-10: 2.5rem;   /* 40px */
+  --amex-space-12: 3rem;     /* 48px */
+  
+  /* Border Radius */
+  --amex-radius-sm: 4px;
+  --amex-radius-md: 8px;
+  --amex-radius-lg: 12px;
+  --amex-radius-xl: 16px;
+  --amex-radius-2xl: 20px;
+  --amex-radius-full: 9999px;
+  
+  /* Shadows */
+  --amex-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --amex-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --amex-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --amex-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Transitions */
+  --amex-transition-fast: 150ms ease-in-out;
+  --amex-transition-base: 200ms ease-in-out;
+  --amex-transition-slow: 300ms ease-in-out;
+}
+
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--amex-font-family);
+  font-size: var(--amex-font-size-base);
+  line-height: 1.5;
+  color: var(--amex-gray-900);
+  background-color: var(--amex-gray-50);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   HEADER / TOP BAR
+   ============================================ */
+
+.amex-header {
+  background: linear-gradient(135deg, var(--amex-blue) 0%, var(--amex-blue-dark) 100%);
+  color: var(--amex-white);
+  padding: var(--amex-space-6) var(--amex-space-4);
+  box-shadow: var(--amex-shadow-md);
+}
+
+.amex-header-greeting {
+  font-size: var(--amex-font-size-sm);
+  font-weight: var(--amex-font-weight-medium);
+  opacity: 0.9;
+  margin-bottom: var(--amex-space-1);
+}
+
+.amex-header-name {
+  font-size: var(--amex-font-size-2xl);
+  font-weight: var(--amex-font-weight-bold);
+  margin-bottom: 0;
+}
+
+/* ============================================
+   CARDS
+   ============================================ */
+
+.amex-card {
+  background: var(--amex-white);
+  border-radius: var(--amex-radius-xl);
+  padding: var(--amex-space-5);
+  margin-bottom: var(--amex-space-4);
+  box-shadow: var(--amex-shadow-md);
+  transition: box-shadow var(--amex-transition-base);
+}
+
+.amex-card:hover {
+  box-shadow: var(--amex-shadow-lg);
+}
+
+.amex-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--amex-space-4);
+}
+
+.amex-card-title {
+  font-size: var(--amex-font-size-lg);
+  font-weight: var(--amex-font-weight-bold);
+  color: var(--amex-gray-900);
+}
+
+.amex-card-subtitle {
+  font-size: var(--amex-font-size-sm);
+  color: var(--amex-gray-600);
+  margin-top: var(--amex-space-1);
+}
+
+/* Account Card - Featured */
+.amex-account-card {
+  background: linear-gradient(135deg, var(--amex-blue) 0%, var(--amex-navy) 100%);
+  color: var(--amex-white);
+  border-radius: var(--amex-radius-xl);
+  padding: var(--amex-space-6);
+  margin: var(--amex-space-4);
+  box-shadow: var(--amex-shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.amex-account-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.amex-account-balance {
+  font-size: var(--amex-font-size-4xl);
+  font-weight: var(--amex-font-weight-bold);
+  margin: var(--amex-space-4) 0;
+  position: relative;
+  z-index: 1;
+}
+
+.amex-account-label {
+  font-size: var(--amex-font-size-sm);
+  opacity: 0.9;
+  font-weight: var(--amex-font-weight-medium);
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.amex-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--amex-space-3) var(--amex-space-5);
+  font-size: var(--amex-font-size-base);
+  font-weight: var(--amex-font-weight-semibold);
+  border-radius: var(--amex-radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: all var(--amex-transition-base);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.amex-btn-primary {
+  background: var(--amex-blue);
+  color: var(--amex-white);
+}
+
+.amex-btn-primary:hover {
+  background: var(--amex-blue-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--amex-shadow-md);
+}
+
+.amex-btn-secondary {
+  background: var(--amex-gray-100);
+  color: var(--amex-gray-900);
+}
+
+.amex-btn-secondary:hover {
+  background: var(--amex-gray-200);
+}
+
+.amex-btn-outline {
+  background: transparent;
+  border: 2px solid var(--amex-blue);
+  color: var(--amex-blue);
+}
+
+.amex-btn-outline:hover {
+  background: var(--amex-blue-light);
+}
+
+.amex-btn-sm {
+  padding: var(--amex-space-2) var(--amex-space-4);
+  font-size: var(--amex-font-size-sm);
+}
+
+.amex-btn-lg {
+  padding: var(--amex-space-4) var(--amex-space-6);
+  font-size: var(--amex-font-size-lg);
+}
+
+/* ============================================
+   LISTS
+   ============================================ */
+
+.amex-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.amex-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--amex-space-4);
+  border-bottom: 1px solid var(--amex-gray-200);
+  transition: background-color var(--amex-transition-fast);
+}
+
+.amex-list-item:last-child {
+  border-bottom: none;
+}
+
+.amex-list-item:hover {
+  background-color: var(--amex-gray-50);
+}
+
+.amex-list-content {
+  flex: 1;
+}
+
+.amex-list-title {
+  font-size: var(--amex-font-size-base);
+  font-weight: var(--amex-font-weight-semibold);
+  color: var(--amex-gray-900);
+  margin-bottom: var(--amex-space-1);
+}
+
+.amex-list-subtitle {
+  font-size: var(--amex-font-size-sm);
+  color: var(--amex-gray-600);
+}
+
+.amex-list-amount {
+  font-size: var(--amex-font-size-lg);
+  font-weight: var(--amex-font-weight-bold);
+  color: var(--amex-gray-900);
+}
+
+.amex-list-amount.positive {
+  color: var(--amex-green);
+}
+
+.amex-list-amount.negative {
+  color: var(--amex-red);
+}
+
+/* ============================================
+   INPUTS
+   ============================================ */
+
+.amex-input {
+  width: 100%;
+  padding: var(--amex-space-3) var(--amex-space-4);
+  font-size: var(--amex-font-size-base);
+  font-family: var(--amex-font-family);
+  color: var(--amex-gray-900);
+  background-color: var(--amex-white);
+  border: 2px solid var(--amex-gray-300);
+  border-radius: var(--amex-radius-md);
+  transition: all var(--amex-transition-base);
+}
+
+.amex-input:focus {
+  outline: none;
+  border-color: var(--amex-blue);
+  box-shadow: 0 0 0 3px var(--amex-blue-light);
+}
+
+.amex-input::placeholder {
+  color: var(--amex-gray-500);
+}
+
+.amex-input:disabled {
+  background-color: var(--amex-gray-100);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.amex-label {
+  display: block;
+  font-size: var(--amex-font-size-sm);
+  font-weight: var(--amex-font-weight-semibold);
+  color: var(--amex-gray-700);
+  margin-bottom: var(--amex-space-2);
+}
+
+/* ============================================
+   BADGES
+   ============================================ */
+
+.amex-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--amex-space-1) var(--amex-space-3);
+  font-size: var(--amex-font-size-xs);
+  font-weight: var(--amex-font-weight-semibold);
+  border-radius: var(--amex-radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.amex-badge-blue {
+  background: var(--amex-blue-light);
+  color: var(--amex-blue);
+}
+
+.amex-badge-green {
+  background: #E8F8F2;
+  color: var(--amex-green);
+}
+
+.amex-badge-red {
+  background: #FDECEA;
+  color: var(--amex-red);
+}
+
+.amex-badge-gray {
+  background: var(--amex-gray-200);
+  color: var(--amex-gray-700);
+}
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
+
+.amex-nav {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: var(--amex-white);
+  border-top: 1px solid var(--amex-gray-200);
+  padding: var(--amex-space-2) 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.amex-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--amex-space-2);
+  color: var(--amex-gray-600);
+  text-decoration: none;
+  transition: color var(--amex-transition-fast);
+  cursor: pointer;
+  background: none;
+  border: none;
+  min-width: 60px;
+}
+
+.amex-nav-item:hover {
+  color: var(--amex-blue);
+}
+
+.amex-nav-item.active {
+  color: var(--amex-blue);
+}
+
+.amex-nav-icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: var(--amex-space-1);
+}
+
+.amex-nav-label {
+  font-size: var(--amex-font-size-xs);
+  font-weight: var(--amex-font-weight-medium);
+}
+
+/* ============================================
+   CONTENT AREA
+   ============================================ */
+
+.amex-content {
+  padding: var(--amex-space-4);
+  padding-bottom: calc(80px + var(--amex-space-4));
+  max-width: 100%;
+}
+
+/* ============================================
+   SECTION TITLES
+   ============================================ */
+
+.amex-section-title {
+  font-size: var(--amex-font-size-xl);
+  font-weight: var(--amex-font-weight-bold);
+  color: var(--amex-gray-900);
+  margin-bottom: var(--amex-space-4);
+}
+
+.amex-section-subtitle {
+  font-size: var(--amex-font-size-sm);
+  color: var(--amex-gray-600);
+  margin-bottom: var(--amex-space-3);
+}
+
+/* ============================================
+   PROGRESS BARS
+   ============================================ */
+
+.amex-progress {
+  width: 100%;
+  height: 8px;
+  background-color: var(--amex-gray-200);
+  border-radius: var(--amex-radius-full);
+  overflow: hidden;
+  margin: var(--amex-space-3) 0;
+}
+
+.amex-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--amex-blue) 0%, var(--amex-teal) 100%);
+  border-radius: var(--amex-radius-full);
+  transition: width var(--amex-transition-slow);
+}
+
+/* ============================================
+   DIVIDERS
+   ============================================ */
+
+.amex-divider {
+  height: 1px;
+  background-color: var(--amex-gray-200);
+  margin: var(--amex-space-4) 0;
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+
+.amex-text-center {
+  text-align: center;
+}
+
+.amex-text-right {
+  text-align: right;
+}
+
+.amex-mt-2 { margin-top: var(--amex-space-2); }
+.amex-mt-4 { margin-top: var(--amex-space-4); }
+.amex-mb-2 { margin-bottom: var(--amex-space-2); }
+.amex-mb-4 { margin-bottom: var(--amex-space-4); }
+.amex-mx-auto { margin-left: auto; margin-right: auto; }
+
+.amex-flex {
+  display: flex;
+}
+
+.amex-flex-col {
+  flex-direction: column;
+}
+
+.amex-items-center {
+  align-items: center;
+}
+
+.amex-justify-between {
+  justify-content: space-between;
+}
+
+.amex-gap-2 { gap: var(--amex-space-2); }
+.amex-gap-4 { gap: var(--amex-space-4); }
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes amex-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.amex-fade-in {
+  animation: amex-fade-in var(--amex-transition-base) ease-out;
+}
+
+@keyframes amex-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.amex-slide-up {
+  animation: amex-slide-up var(--amex-transition-slow) ease-out;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (min-width: 768px) {
+  .amex-content {
+    max-width: 768px;
+    margin: 0 auto;
+  }
+  
+  .amex-nav {
+    max-width: 768px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
