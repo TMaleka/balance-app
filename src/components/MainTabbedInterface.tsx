@@ -60,9 +60,8 @@ export default function MainTabbedInterface({
   const tabs = [
     { id: 0, name: 'Progress', icon: TrendingUp },
     { id: 1, name: 'Expenses', icon: Receipt },
-    { id: 2, name: 'Loyalty', icon: CreditCard },
-    { id: 3, name: 'Settings', icon: Settings },
-    { id: 4, name: 'Profile', icon: User }
+    { id: 2, name: 'Settings', icon: Settings },
+    { id: 3, name: 'Profile', icon: User }
   ];
 
   // Handle touch events for swiping
@@ -135,22 +134,13 @@ export default function MainTabbedInterface({
         );
       case 2:
         return (
-          <div>
-            <LoyaltyCard />
-            <PointsRedemptionWrapper />
-            <AnalyticsDashboard />
-            <PartnerDirectory />
-          </div>
-        );
-      case 3:
-        return (
           <AmexBudgetSettings
             budgets={budgets}
             onSave={onSaveBudgetSettings}
             onCancel={() => setActiveTab(0)} // Go back to Progress tab
           />
         );
-      case 4:
+      case 3:
         return (
           <UserProfile session={session} onLogout={onLogout} />
         );

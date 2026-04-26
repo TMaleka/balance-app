@@ -5,18 +5,19 @@
 
 // Supabase Configuration
 export const SUPABASE_CONFIG = {
-  url: import.meta.env.VITE_SUPABASE_URL || 'https://qmyznjnfweolvgwiqqak.supabase.co',
-  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXpuam5md2VvbHZnd2lxcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNjY0ODQsImV4cCI6MjA3NDc0MjQ4NH0.GlUUAxlMh9pb8pC4da48NZck91VbBLGiXAUR3QskJZc'
+  url: import.meta.env.VITE_SUPABASE_URL,
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY
 };
 
 // Partner API Keys (for testing)
+// Note: In production, these should be fetched from a secure backend API
 export const TEST_API_KEYS = {
-  'ptr_checkers_01': import.meta.env.VITE_TEST_API_KEY_CHECKERS || 'test_api_key_123',
-  'ptr_shoprite_01': import.meta.env.VITE_TEST_API_KEY_SHOPRITE || 'test_api_key_456',
-  'ptr_shell_01': import.meta.env.VITE_TEST_API_KEY_SHELL || 'test_api_key_789',
-  'ptr_engen_01': import.meta.env.VITE_TEST_API_KEY_ENGEN || 'test_api_key_abc',
-  'ptr_kfc_01': import.meta.env.VITE_TEST_API_KEY_KFC || 'test_api_key_def',
-  'ptr_mcdonald_01': import.meta.env.VITE_TEST_API_KEY_MCDONALD || 'test_api_key_ghi'
+  'ptr_checkers_01': import.meta.env.VITE_TEST_API_KEY_CHECKERS || '',
+  'ptr_shoprite_01': import.meta.env.VITE_TEST_API_KEY_SHOPRITE || '',
+  'ptr_shell_01': import.meta.env.VITE_TEST_API_KEY_SHELL || '',
+  'ptr_engen_01': import.meta.env.VITE_TEST_API_KEY_ENGEN || '',
+  'ptr_kfc_01': import.meta.env.VITE_TEST_API_KEY_KFC || '',
+  'ptr_mcdonald_01': import.meta.env.VITE_TEST_API_KEY_MCDONALD || ''
 };
 
 // App Configuration
@@ -48,18 +49,21 @@ const validateConfig = () => {
   const errors: string[] = [];
   
   if (!SUPABASE_CONFIG.url) {
-    errors.push('VITE_SUPABASE_URL is required');
+    errors.push('VITE_SUPABASE_URL is required - please add it to your .env file');
   }
   
   if (!SUPABASE_CONFIG.anonKey) {
-    errors.push('VITE_SUPABASE_ANON_KEY is required');
+    errors.push('VITE_SUPABASE_ANON_KEY is required - please add it to your .env file');
   }
   
   if (errors.length > 0) {
-    console.error('Environment configuration errors:', errors);
-    if (APP_CONFIG.isProduction) {
-      throw new Error(`Invalid environment configuration: ${errors.join(', ')}`);
-    }
+    console.error('❌ Environment configuration errors:', errors);
+    throw new Error(
+      `Missing required environment variables:\n${errors.join('\n')}\n\n` +
+      `Please create a .env file in the project root with:\n` +
+      `VITE_SUPABASE_URL=your_supabase_url\n` +
+      `VITE_SUPABASE_ANON_KEY=your_supabase_anon_key`
+    );
   }
 };
 

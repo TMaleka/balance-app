@@ -5,10 +5,11 @@
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, email, created_at, updated_at)
+  INSERT INTO public.users (id, email, phone_number, created_at, updated_at)
   VALUES (
     NEW.id,
     NEW.email,
+    NEW.raw_user_meta_data->>'phone_number',
     NOW(),
     NOW()
   )
