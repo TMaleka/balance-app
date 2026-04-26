@@ -44,26 +44,23 @@ export const FEATURE_FLAGS = {
   debugMode: import.meta.env.VITE_DEBUG_MODE === 'true' || APP_CONFIG.isDevelopment
 };
 
-// Validation
+// Validation - log errors but don't crash the app
+export let envConfigErrors: string[] = [];
+
 const validateConfig = () => {
   const errors: string[] = [];
   
   if (!SUPABASE_CONFIG.url) {
-    errors.push('VITE_SUPABASE_URL is required - please add it to your .env file');
+    errors.push('VITE_SUPABASE_URL is missing');
   }
   
   if (!SUPABASE_CONFIG.anonKey) {
-    errors.push('VITE_SUPABASE_ANON_KEY is required - please add it to your .env file');
+    errors.push('VITE_SUPABASE_ANON_KEY is missing');
   }
   
   if (errors.length > 0) {
-    console.error('❌ Environment configuration errors:', errors);
-    throw new Error(
-      `Missing required environment variables:\n${errors.join('\n')}\n\n` +
-      `Please create a .env file in the project root with:\n` +
-      `VITE_SUPABASE_URL=your_supabase_url\n` +
-      `VITE_SUPABASE_ANON_KEY=your_supabase_anon_key`
-    );
+    console.error('Environment configuration errors:', errors);
+    envConfigErrors = errors;
   }
 };
 

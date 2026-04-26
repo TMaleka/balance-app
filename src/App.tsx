@@ -15,6 +15,7 @@ import SystemHealthMonitor from './components/SystemHealthMonitor';
 import { errorLogger, setUserId } from './utils/errorLogging';
 import { performanceMonitor } from './utils/performanceMonitoring';
 import { analytics, setAnalyticsUserId, trackPageView } from './utils/analytics';
+import { envConfigErrors } from './config/environment';
 import './styles/amex-design.css';
 
 function App() {
@@ -498,6 +499,22 @@ function App() {
   };
 
   const renderContent = () => {
+    if (envConfigErrors.length > 0) {
+      return (
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', padding: '24px' }}>
+          <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', maxWidth: '400px', width: '100%', boxShadow: '0 4px 24px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚙️</div>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1a1a1a', marginBottom: '12px' }}>Configuration Error</h2>
+            <p style={{ fontSize: '14px', color: '#666', marginBottom: '20px', lineHeight: 1.5 }}>The app is missing required environment variables. Please contact the administrator.</p>
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '12px', textAlign: 'left' }}>
+              {envConfigErrors.map((err, i) => (
+                <p key={i} style={{ fontSize: '13px', color: '#dc2626', margin: i > 0 ? '8px 0 0' : '0' }}>• {err}</p>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
     if (!session) return <Auth />;
     if (isLoading) return <LoadingScreen />;
     if (isFirstTime) return <AmexOnboardingFlow onComplete={handleOnboardingComplete} />;
