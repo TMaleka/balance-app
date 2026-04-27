@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, Award, DollarSign, ChevronLeft, ChevronRight, AlertTriangle, Wallet } from 'lucide-react';
 import { Budget } from '../types';
 import { supabase } from '../supabaseClient';
+import InlineAmountInput from './InlineAmountInput';
 
 interface AmexProgressTabProps {
   budgets: Budget[];
@@ -17,7 +18,7 @@ interface AmexProgressTabProps {
   onRemoveSpend: (budgetId: number) => void;
   monthlyIncome: number;
   onUpdateSavings: (amount: number) => void;
-  onUpdateIncome: () => void;
+  onUpdateIncome: (amount: number) => void;
   onDateChange: (date: Date) => void;
   showBudgetBreakdown?: boolean;
 }
@@ -42,6 +43,8 @@ export default function AmexProgressTab({
 }: AmexProgressTabProps) {
   const [withdrawalRate, setWithdrawalRate] = useState(4);
   const [userName, setUserName] = useState<string>('User');
+  const [showIncomeInput, setShowIncomeInput] = useState(false);
+  const [showSavingsInput, setShowSavingsInput] = useState(false);
 
   // Fetch user's full name from database
   useEffect(() => {
@@ -77,14 +80,12 @@ export default function AmexProgressTab({
     onDateChange(new Date(year, month));
   };
 
-  const handleUpdateSavings = () => {
-    const amountStr = prompt('Enter savings amount:');
-    if (amountStr) {
-      const amount = parseFloat(amountStr);
-      if (!isNaN(amount) && amount > 0) {
-        onUpdateSavings(amount);
-      }
-    }
+  const handleUpdateSavings = (amount: number) => {
+    onUpdateSavings(amount);
+  };
+
+  const handleUpdateIncome = (amount: number) => {
+    onUpdateIncome(amount);
   };
 
   const totalBudget = budgets.reduce((sum, b) => sum + b.budget, 0);
@@ -175,8 +176,8 @@ export default function AmexProgressTab({
             </select>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div className="amex-account-balance">R{totalRemaining.toLocaleString()}</div>
-            <div className="amex-account-label">Available to spend</div>
+            <div className="amex-account-balance">R{monthlyIncome > 0 ? remainingBalance.toLocaleString() : totalRemaining.toLocaleString()}</div>
+            <div className="amex-account-label">{monthlyIncome > 0 ? 'Remaining Balance' : 'Available to spend'}</div>
           </div>
         </div>
 
@@ -190,7 +191,7 @@ export default function AmexProgressTab({
                   R{monthlyIncome.toLocaleString()}
                 </div>
               </div>
-              <button onClick={onUpdateIncome} className="amex-btn amex-btn-sm amex-btn-outline">Update</button>
+              <button onClick={() => setShowIncomeInput(true)} className="amex-btn amex-btn-sm amex-btn-outline">Update</button>
             </div>
 
             <div style={{ borderTop: '1px solid var(--amex-gray-200, #e5e7eb)', marginTop: 'var(--amex-space-3)', paddingTop: 'var(--amex-space-3)' }}>
@@ -260,7 +261,7 @@ export default function AmexProgressTab({
             <p style={{ fontSize: 'var(--amex-font-size-sm)', color: 'var(--amex-gray-600)', marginBottom: 'var(--amex-space-3)' }}>
               Track your remaining balance and see how many days your money will last.
             </p>
-            <button onClick={onUpdateIncome} className="amex-btn amex-btn-primary">
+            <button onClick={() => setShowIncomeInput(true)} className="amex-btn amex-btn-primary">
               Set Income
             </button>
           </div>
@@ -281,7 +282,7 @@ export default function AmexProgressTab({
                 <div className="amex-list-title">R{savings.toLocaleString()}</div>
                 <div className="amex-list-subtitle">Monthly Savings • YTD: R{ytdSavings.toLocaleString()}</div>
               </div>
-              <button onClick={handleUpdateSavings} className="amex-btn amex-btn-sm amex-btn-outline">Update</button>
+              <button onClick={() => setShowSavingsInput(true)} className="amex-btn amex-btn-sm amex-btn-outline">Update</button>
             </div>
           </div>
         </div>
@@ -434,6 +435,24 @@ export default function AmexProgressTab({
           </div>
         )}
       </div>
+
+      {/* Inline Modals */}
+      {showIncomeInput && (
+        <InlineAmountInput
+          title="Monthly Income"
+          currentValue={monthlyIncome}
+          onSave={handleUpdateIncome}
+          onClose={() => setShowIncomeInput(false)}
+        />
+      )}
+      {showSavingsInput && (
+        <InlineAmountInput
+          title="Monthly Savings"
+          currentValue={savings}
+          onSave={handleUpdateSavings}
+          onClose={() => setShowSavingsInput(false)}
+        />
+      )}
     </div>
   );
 }

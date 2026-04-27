@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { TrendingUp, Receipt, Settings, User } from 'lucide-react';
+import { TrendingUp, Receipt, User } from 'lucide-react';
 import AmexProgressTab from './AmexProgressTab';
 import ExpenseOverview from './ExpenseOverview';
-import AmexBudgetSettings from './AmexBudgetSettings';
 import UserProfile from './UserProfile';
+import QuickAddExpense from './QuickAddExpense';
 import { Budget } from '../types';
 
 interface MainTabbedInterfaceProps {
@@ -21,8 +21,8 @@ interface MainTabbedInterfaceProps {
   onManageBudget: () => void;
   onAddSpend: (budgetId: number) => void;
   onRemoveSpend: (budgetId: number) => void;
-  onUpdateSavings: () => void;
-  onUpdateIncome: () => void;
+  onUpdateSavings: (amount: number) => void;
+  onUpdateIncome: (amount: number) => void;
   onDateChange: (date: Date) => void;
   onSaveBudgetSettings: (budgets: Budget[]) => void;
   onLogout: () => void;
@@ -55,34 +55,28 @@ export default function MainTabbedInterface({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const tabs = [
-    { id: 0, name: 'Progress', icon: TrendingUp },
+    { id: 0, name: 'Home', icon: TrendingUp },
     { id: 1, name: 'Expenses', icon: Receipt },
-    { id: 2, name: 'Settings', icon: Settings },
-    { id: 3, name: 'Profile', icon: User }
+    { id: 2, name: 'Profile', icon: User }
   ];
 
   // Handle touch events for swiping
   const handleTouchStart = (e: React.TouchEvent) => {
-    // Don't handle swipes if user is touching a button, nedbank-input, or other interactive element
     const target = e.target as HTMLElement;
-    if (target.closest('button, nedbank-input, select, textarea, a')) {
+    if (target.closest('button, input, select, textarea, a')) {
       return;
     }
-    
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    // Don't handle swipes if we didn't start tracking
     if (touchStart === null) return;
-    
     setTouchEnd(e.targetTouches[0].clientX);
   };
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
@@ -93,8 +87,6 @@ export default function MainTabbedInterface({
     if (isRightSwipe && activeTab > 0) {
       setActiveTab(activeTab - 1);
     }
-    
-    // Reset touch tracking
     setTouchStart(null);
     setTouchEnd(null);
   };
@@ -119,7 +111,7 @@ export default function MainTabbedInterface({
             onDateChange={onDateChange}
             annualizedExpenses={annualizedExpenses}
             ytdExpenses={ytdExpenses}
-            showBudgetBreakdown={false} // Remove budget breakdown
+            showBudgetBreakdown={false}
           />
         );
       case 1:
@@ -133,15 +125,12 @@ export default function MainTabbedInterface({
         );
       case 2:
         return (
-          <AmexBudgetSettings
+          <UserProfile
+            session={session}
+            onLogout={onLogout}
             budgets={budgets}
-            onSave={onSaveBudgetSettings}
-            onCancel={() => setActiveTab(0)} // Go back to Progress tab
+            onSaveBudgetSettings={onSaveBudgetSettings}
           />
-        );
-      case 3:
-        return (
-          <UserProfile session={session} onLogout={onLogout} />
         );
       default:
         return null;
@@ -161,12 +150,14 @@ export default function MainTabbedInterface({
         {renderTabContent(activeTab)}
       </div>
 
+      {/* FAB - Quick Add Expense */}
+      <QuickAddExpense budgets={monthlyBudgets} onExpenseAdded={onExpenseAdded} />
+
       {/* Bottom Navigation - Amex Style */}
       <nav className="amex-nav">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
-          
           return (
             <button
               key={tab.id}
@@ -182,4 +173,3 @@ export default function MainTabbedInterface({
     </div>
   );
 }
-

@@ -477,12 +477,8 @@ function App() {
     setSession(null);
   };
 
-  const handleUpdateMonthlyIncome = async () => {
+  const handleUpdateMonthlyIncome = async (amount: number) => {
     if (!session) return;
-    const amountStr = prompt('Enter your monthly income:');
-    if (!amountStr) return;
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount < 0) return;
 
     const firstDayOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1).toISOString().substring(0, 10);
     const previousIncome = monthlyIncome;
@@ -502,12 +498,8 @@ function App() {
     }
   };
 
-  const handleUpdateMonthlySavings = async () => {
+  const handleUpdateMonthlySavings = async (amount: number) => {
     if (!session) return;
-    const amountStr = prompt('Enter savings for this month:');
-    if (!amountStr) return;
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount < 0) return;
 
     const firstDayOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1).toISOString().substring(0, 10);
     const currentMonthlySavings = monthlySavings;

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Calendar, Shield, LogOut, Edit3, Save, X, Key, AlertCircle, RefreshCw } from 'lucide-react';
+import { User, Mail, Calendar, Shield, LogOut, Edit3, Save, X, Key, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Settings } from 'lucide-react';
+import { Budget } from '../types';
+import AmexBudgetSettings from './AmexBudgetSettings';
 import { supabase } from '../supabaseClient';
 import { Session } from '@supabase/supabase-js';
 import { useNotificationHelpers } from './NotificationSystem';
@@ -8,6 +10,8 @@ import { safeAsync } from '../utils/errorHandling';
 interface UserProfileProps {
   session: Session;
   onLogout: () => void;
+  budgets?: Budget[];
+  onSaveBudgetSettings?: (budgets: Budget[]) => void;
 }
 
 interface UserProfile {
@@ -21,7 +25,7 @@ interface UserProfile {
   points_balance: number;
 }
 
-export default function UserProfile({ session, onLogout }: UserProfileProps) {
+export default function UserProfile({ session, onLogout, budgets, onSaveBudgetSettings }: UserProfileProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -30,6 +34,7 @@ export default function UserProfile({ session, onLogout }: UserProfileProps) {
   const [passwordResetSent, setPasswordResetSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [showBudgetSettings, setShowBudgetSettings] = useState(false);
   const { showSuccess, showError, showWarning } = useNotificationHelpers();
   
   const [fullName, setFullName] = useState('');
@@ -411,6 +416,44 @@ export default function UserProfile({ session, onLogout }: UserProfileProps) {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Budget Settings */}
+      {budgets && onSaveBudgetSettings && (
+        <div className="amex-card">
+          <button
+            onClick={() => setShowBudgetSettings(!showBudgetSettings)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--amex-space-3)' }}>
+              <div style={{ width: '40px', height: '40px', background: 'var(--amex-blue-light)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Settings style={{ width: '20px', height: '20px', color: 'var(--amex-blue)' }} />
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <h4 className="amex-card-title">Budget Settings</h4>
+                <p className="amex-card-subtitle">{budgets.length} categor{budgets.length === 1 ? 'y' : 'ies'}</p>
+              </div>
+            </div>
+            {showBudgetSettings ? (
+              <ChevronUp style={{ width: '20px', height: '20px', color: 'var(--amex-gray-400)' }} />
+            ) : (
+              <ChevronDown style={{ width: '20px', height: '20px', color: 'var(--amex-gray-400)' }} />
+            )}
+          </button>
+
+          {showBudgetSettings && (
+            <div style={{ marginTop: 'var(--amex-space-4)', borderTop: '1px solid var(--amex-gray-200)', paddingTop: 'var(--amex-space-4)' }}>
+              <AmexBudgetSettings
+                budgets={budgets}
+                onSave={(updated) => {
+                  onSaveBudgetSettings(updated);
+                  setShowBudgetSettings(false);
+                }}
+                onCancel={() => setShowBudgetSettings(false)}
+              />
+            </div>
+          )}
         </div>
       )}
 
