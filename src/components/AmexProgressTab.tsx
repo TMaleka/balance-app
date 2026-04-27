@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Award, DollarSign, ChevronLeft, ChevronRight, AlertTriangle, Wallet } from 'lucide-react';
+import { AlertTriangle, Wallet } from 'lucide-react';
 import { Budget } from '../types';
 import { supabase } from '../supabaseClient';
 import InlineAmountInput from './InlineAmountInput';
@@ -41,7 +41,6 @@ export default function AmexProgressTab({
   onDateChange, 
   showBudgetBreakdown = true 
 }: AmexProgressTabProps) {
-  const [withdrawalRate, setWithdrawalRate] = useState(4);
   const [userName, setUserName] = useState<string>('User');
   const [showIncomeInput, setShowIncomeInput] = useState(false);
   const [showSavingsInput, setShowSavingsInput] = useState(false);
@@ -101,8 +100,6 @@ export default function AmexProgressTab({
   const dailySpendRate = totalSpent / daysElapsed;
   const daysUntilBroke = dailySpendRate > 0 ? Math.floor(remainingBalance / dailySpendRate) : remainingBalance > 0 ? 999 : 0;
   const isViewingCurrentMonth = selectedDate.getMonth() === now.getMonth() && selectedDate.getFullYear() === now.getFullYear();
-  const fuGoal = withdrawalRate > 0 ? annualizedExpenses / (withdrawalRate / 100) : 0;
-  const fuProgress = fuGoal > 0 ? (ytdSavings / fuGoal) * 100 : 0;
   
   // Format current month and year
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -283,80 +280,6 @@ export default function AmexProgressTab({
                 <div className="amex-list-subtitle">Monthly Savings • YTD: R{ytdSavings.toLocaleString()}</div>
               </div>
               <button onClick={() => setShowSavingsInput(true)} className="amex-btn amex-btn-sm amex-btn-outline">Update</button>
-            </div>
-          </div>
-        </div>
-
-        {/* FI Goal Card */}
-        <div className="amex-card">
-          <div className="amex-card-header">
-            <div>
-              <div className="amex-card-title">FI Goal</div>
-              <div className="amex-card-subtitle" style={{ fontSize: 'var(--amex-font-size-2xl)', fontWeight: 'var(--amex-font-weight-bold)', color: 'var(--amex-blue)', marginTop: 'var(--amex-space-2)' }}>
-                R{fuGoal.toLocaleString()}
-              </div>
-            </div>
-            <div style={{ 
-              width: '48px', 
-              height: '48px', 
-              background: 'var(--amex-blue-light)', 
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Award style={{ width: '24px', height: '24px', color: 'var(--amex-blue)' }} />
-            </div>
-          </div>
-          
-          {/* Progress Bar */}
-          <div style={{ marginBottom: 'var(--amex-space-4)' }}>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              marginBottom: 'var(--amex-space-2)',
-              fontSize: 'var(--amex-font-size-sm)',
-              color: 'var(--amex-gray-600)'
-            }}>
-              <span>{fuProgress.toFixed(1)}% Complete</span>
-              <span>{withdrawalRate}% Rule</span>
-            </div>
-            <div className="amex-progress">
-              <div 
-                className="amex-progress-bar"
-                style={{ width: `${Math.min(100, fuProgress)}%` }}
-              ></div>
-            </div>
-          </div>
-
-          {/* Withdrawal Rate Slider */}
-          <div>
-            <label className="amex-label">
-              Withdrawal Rate
-            </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--amex-space-3)' }}>
-              <input
-                type="range"
-                min="1"
-                max="10"
-                step="0.5"
-                value={withdrawalRate}
-                onChange={(e) => setWithdrawalRate(Number(e.target.value))}
-                style={{
-                  flex: 1,
-                  height: '4px',
-                  cursor: 'pointer'
-                }}
-              />
-              <span style={{ 
-                fontSize: 'var(--amex-font-size-base)', 
-                fontWeight: 'var(--amex-font-weight-semibold)',
-                minWidth: '48px',
-                textAlign: 'right',
-                color: 'var(--amex-blue)'
-              }}>
-                {withdrawalRate}%
-              </span>
             </div>
           </div>
         </div>
