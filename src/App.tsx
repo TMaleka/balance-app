@@ -34,6 +34,7 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [annualizedExpenses, setAnnualizedExpenses] = useState(0);
   const [ytdExpenses, setYtdExpenses] = useState(0);
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
 
   const isFirstTime = !isLoading && budgets.length === 0;
 
@@ -165,6 +166,15 @@ function App() {
         .maybeSingle();
     setMonthlySavings(monthlySavingsData ? monthlySavingsData.amount : 0);
 
+    // --- Step 5: Fetch Monthly Income ---
+    const { data: monthlyIncomeData } = await supabase
+        .from('monthly_income')
+        .select('amount')
+        .eq('user_id', session.user.id)
+        .eq('month', firstDayOfMonth)
+        .limit(1)
+        .maybeSingle();
+    setMonthlyIncome(monthlyIncomeData ? monthlyIncomeData.amount : 0);
 
     // --- Final Calculations ---
     const currentMonthNumber = new Date().getMonth() + 1;
@@ -467,6 +477,31 @@ function App() {
     setSession(null);
   };
 
+  const handleUpdateMonthlyIncome = async () => {
+    if (!session) return;
+    const amountStr = prompt('Enter your monthly income:');
+    if (!amountStr) return;
+    const amount = parseFloat(amountStr);
+    if (isNaN(amount) || amount < 0) return;
+
+    const firstDayOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1).toISOString().substring(0, 10);
+    const previousIncome = monthlyIncome;
+    setMonthlyIncome(amount);
+
+    try {
+      const { error } = await supabase
+        .from('monthly_income')
+        .upsert({ user_id: session.user.id, month: firstDayOfMonth, amount }, {
+          onConflict: 'user_id, month'
+        });
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Database Error:', error);
+      setMonthlyIncome(previousIncome);
+      alert(`Database Error: ${error.message}`);
+    }
+  };
+
   const handleUpdateMonthlySavings = async () => {
     if (!session) return;
     const amountStr = prompt('Enter savings for this month:');
@@ -536,6 +571,7 @@ function App() {
             rebalanceCount={rebalanceCount}
             monthlySavings={monthlySavings}
             ytdSavings={ytdSavings}
+            monthlyIncome={monthlyIncome}
             selectedDate={selectedDate}
             annualizedExpenses={annualizedExpenses}
             ytdExpenses={ytdExpenses}
@@ -545,6 +581,7 @@ function App() {
             onAddSpend={handleManualAddSpend}
             onRemoveSpend={handleManualRemoveSpend}
             onUpdateSavings={handleUpdateMonthlySavings}
+            onUpdateIncome={handleUpdateMonthlyIncome}
             onDateChange={handleDateChange}
             onSaveBudgetSettings={handleSaveBudgetSettings}
             onLogout={handleLogout}

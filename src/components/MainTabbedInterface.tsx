@@ -1,16 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { TrendingUp, Receipt, Settings, CreditCard, User } from 'lucide-react';
+import { TrendingUp, Receipt, Settings, User } from 'lucide-react';
 import AmexProgressTab from './AmexProgressTab';
 import ExpenseOverview from './ExpenseOverview';
 import AmexBudgetSettings from './AmexBudgetSettings';
-import LoyaltyCard from './LoyaltyCard';
-import QuickTest from './QuickTest';
-import PartnerApiTest from './PartnerApiTest';
-import PointsRedemptionWrapper from './PointsRedemptionWrapper';
-import PartnerDirectory from './PartnerDirectory';
-import AnalyticsDashboard from './AnalyticsDashboard';
 import UserProfile from './UserProfile';
-import QuickLogout from './QuickLogout';
 import { Budget } from '../types';
 
 interface MainTabbedInterfaceProps {
@@ -19,6 +12,7 @@ interface MainTabbedInterfaceProps {
   rebalanceCount: number;
   monthlySavings: number;
   ytdSavings: number;
+  monthlyIncome: number;
   selectedDate: Date;
   annualizedExpenses: number;
   ytdExpenses: number;
@@ -28,6 +22,7 @@ interface MainTabbedInterfaceProps {
   onAddSpend: (budgetId: number) => void;
   onRemoveSpend: (budgetId: number) => void;
   onUpdateSavings: () => void;
+  onUpdateIncome: () => void;
   onDateChange: (date: Date) => void;
   onSaveBudgetSettings: (budgets: Budget[]) => void;
   onLogout: () => void;
@@ -39,6 +34,7 @@ export default function MainTabbedInterface({
   rebalanceCount,
   monthlySavings,
   ytdSavings,
+  monthlyIncome,
   selectedDate,
   annualizedExpenses,
   ytdExpenses,
@@ -48,6 +44,7 @@ export default function MainTabbedInterface({
   onAddSpend,
   onRemoveSpend,
   onUpdateSavings,
+  onUpdateIncome,
   onDateChange,
   onSaveBudgetSettings,
   onLogout
@@ -115,7 +112,9 @@ export default function MainTabbedInterface({
             onRemoveSpend={onRemoveSpend}
             savings={monthlySavings}
             ytdSavings={ytdSavings}
+            monthlyIncome={monthlyIncome}
             onUpdateSavings={onUpdateSavings}
+            onUpdateIncome={onUpdateIncome}
             selectedDate={selectedDate}
             onDateChange={onDateChange}
             annualizedExpenses={annualizedExpenses}

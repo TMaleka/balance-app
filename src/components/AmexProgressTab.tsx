@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Award, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, Award, DollarSign, ChevronLeft, ChevronRight, AlertTriangle, Wallet } from 'lucide-react';
 import { Budget } from '../types';
 import { supabase } from '../supabaseClient';
 
@@ -15,7 +15,9 @@ interface AmexProgressTabProps {
   onManageBudget: () => void;
   onAddSpend: (budgetId: number) => void;
   onRemoveSpend: (budgetId: number) => void;
+  monthlyIncome: number;
   onUpdateSavings: (amount: number) => void;
+  onUpdateIncome: () => void;
   onDateChange: (date: Date) => void;
   showBudgetBreakdown?: boolean;
 }
@@ -32,7 +34,9 @@ export default function AmexProgressTab({
   onManageBudget, 
   onAddSpend, 
   onRemoveSpend, 
+  monthlyIncome,
   onUpdateSavings, 
+  onUpdateIncome,
   onDateChange, 
   showBudgetBreakdown = true 
 }: AmexProgressTabProps) {
@@ -86,6 +90,16 @@ export default function AmexProgressTab({
   const totalBudget = budgets.reduce((sum, b) => sum + b.budget, 0);
   const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
   const totalRemaining = totalBudget - totalSpent;
+
+  // Income & Days Until Broke calculations
+  const remainingBalance = monthlyIncome - totalSpent;
+  const now = new Date();
+  const dayOfMonth = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const daysElapsed = Math.max(dayOfMonth - 1, 1);
+  const dailySpendRate = totalSpent / daysElapsed;
+  const daysUntilBroke = dailySpendRate > 0 ? Math.floor(remainingBalance / dailySpendRate) : remainingBalance > 0 ? 999 : 0;
+  const isViewingCurrentMonth = selectedDate.getMonth() === now.getMonth() && selectedDate.getFullYear() === now.getFullYear();
   const fuGoal = withdrawalRate > 0 ? annualizedExpenses / (withdrawalRate / 100) : 0;
   const fuProgress = fuGoal > 0 ? (ytdSavings / fuGoal) * 100 : 0;
   
@@ -165,6 +179,92 @@ export default function AmexProgressTab({
             <div className="amex-account-label">Available to spend</div>
           </div>
         </div>
+
+        {/* Income & Runway Card */}
+        {monthlyIncome > 0 && (
+          <div className="amex-card" style={{ border: daysUntilBroke <= 7 && isViewingCurrentMonth ? '1px solid var(--amex-red, #dc2626)' : undefined }}>
+            <div className="amex-card-header">
+              <div>
+                <div className="amex-card-title">Monthly Income</div>
+                <div style={{ fontSize: 'var(--amex-font-size-2xl)', fontWeight: 'var(--amex-font-weight-bold)', color: 'var(--amex-blue)', marginTop: 'var(--amex-space-1)' }}>
+                  R{monthlyIncome.toLocaleString()}
+                </div>
+              </div>
+              <button onClick={onUpdateIncome} className="amex-btn amex-btn-sm amex-btn-outline">Update</button>
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--amex-gray-200, #e5e7eb)', marginTop: 'var(--amex-space-3)', paddingTop: 'var(--amex-space-3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--amex-space-3)' }}>
+                <span style={{ fontSize: 'var(--amex-font-size-sm)', color: 'var(--amex-gray-600)' }}>Remaining Balance</span>
+                <span style={{ fontSize: 'var(--amex-font-size-lg)', fontWeight: 'var(--amex-font-weight-bold)', color: remainingBalance >= 0 ? 'var(--amex-green, #16a34a)' : 'var(--amex-red, #dc2626)' }}>
+                  R{remainingBalance.toLocaleString()}
+                </span>
+              </div>
+
+              {/* Spending progress bar */}
+              <div style={{ marginBottom: 'var(--amex-space-3)' }}>
+                <div className="amex-progress">
+                  <div 
+                    className="amex-progress-bar"
+                    style={{ 
+                      width: `${Math.min(100, monthlyIncome > 0 ? (totalSpent / monthlyIncome) * 100 : 0)}%`,
+                      background: totalSpent > monthlyIncome ? 'var(--amex-red, #dc2626)' : totalSpent > monthlyIncome * 0.8 ? 'var(--amex-orange, #f59e0b)' : 'linear-gradient(90deg, var(--amex-blue) 0%, var(--amex-teal, #00b8d9) 100%)'
+                    }}
+                  ></div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--amex-space-1)', fontSize: 'var(--amex-font-size-xs)', color: 'var(--amex-gray-600)' }}>
+                  <span>R{totalSpent.toLocaleString()} spent</span>
+                  <span>{monthlyIncome > 0 ? ((totalSpent / monthlyIncome) * 100).toFixed(0) : 0}% of income</span>
+                </div>
+              </div>
+
+              {/* Days Until Broke */}
+              {isViewingCurrentMonth && (
+                <div style={{ 
+                  background: daysUntilBroke <= 3 ? '#fef2f2' : daysUntilBroke <= 7 ? '#fffbeb' : '#f0fdf4',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  {daysUntilBroke <= 7 ? (
+                    <AlertTriangle style={{ width: '24px', height: '24px', color: daysUntilBroke <= 3 ? '#dc2626' : '#f59e0b', flexShrink: 0 }} />
+                  ) : (
+                    <Wallet style={{ width: '24px', height: '24px', color: '#16a34a', flexShrink: 0 }} />
+                  )}
+                  <div>
+                    <div style={{ fontSize: 'var(--amex-font-size-sm)', fontWeight: 'var(--amex-font-weight-semibold)', color: daysUntilBroke <= 3 ? '#dc2626' : daysUntilBroke <= 7 ? '#b45309' : '#15803d' }}>
+                      {remainingBalance <= 0 
+                        ? "You've exceeded your income this month."
+                        : daysUntilBroke > daysInMonth - dayOfMonth
+                          ? "You're on track to make it through the month."
+                          : `At your current spending, you will run out of money in ${daysUntilBroke} day${daysUntilBroke !== 1 ? 's' : ''}.`
+                      }
+                    </div>
+                    <div style={{ fontSize: 'var(--amex-font-size-xs)', color: 'var(--amex-gray-600)', marginTop: '4px' }}>
+                      Avg. R{dailySpendRate.toFixed(0)}/day • {daysInMonth - dayOfMonth} days left in month
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Set Income prompt if not set */}
+        {monthlyIncome === 0 && (
+          <div className="amex-card" style={{ textAlign: 'center' }}>
+            <Wallet style={{ width: '32px', height: '32px', color: 'var(--amex-blue)', margin: '0 auto var(--amex-space-3)' }} />
+            <div className="amex-card-title" style={{ marginBottom: 'var(--amex-space-2)' }}>Set Your Monthly Income</div>
+            <p style={{ fontSize: 'var(--amex-font-size-sm)', color: 'var(--amex-gray-600)', marginBottom: 'var(--amex-space-3)' }}>
+              Track your remaining balance and see how many days your money will last.
+            </p>
+            <button onClick={onUpdateIncome} className="amex-btn amex-btn-primary">
+              Set Income
+            </button>
+          </div>
+        )}
 
         {/* Summary Section */}
         <div className="amex-card">
