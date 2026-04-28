@@ -477,6 +477,37 @@ function App() {
     setSession(null);
   };
 
+  const handleQuickRebalance = async (fromId: number | string, toId: number | string, amount: number) => {
+    if (!session) return;
+    // Move budget allocation: decrease source budget, increase target budget
+    const sourceBudget = budgets.find(b => b.id === fromId);
+    const targetBudget = budgets.find(b => b.id === toId);
+    if (!sourceBudget || !targetBudget) return;
+
+    const newSourceBudget = sourceBudget.budget - amount;
+    const newTargetBudget = targetBudget.budget + amount;
+
+    try {
+      const { error: err1 } = await supabase
+        .from('budgets')
+        .update({ budget: newSourceBudget })
+        .eq('id', fromId);
+      if (err1) throw err1;
+
+      const { error: err2 } = await supabase
+        .from('budgets')
+        .update({ budget: newTargetBudget })
+        .eq('id', toId);
+      if (err2) throw err2;
+
+      setRebalanceCount(prev => prev + 1);
+      await fetchData();
+    } catch (error: any) {
+      console.error('Rebalance Error:', error);
+      alert(`Rebalance failed: ${error.message}`);
+    }
+  };
+
   const handleUpdateMonthlyIncome = async (amount: number) => {
     if (!session) return;
 
@@ -574,6 +605,7 @@ function App() {
             onRemoveSpend={handleManualRemoveSpend}
             onUpdateSavings={handleUpdateMonthlySavings}
             onUpdateIncome={handleUpdateMonthlyIncome}
+            onRebalance={handleQuickRebalance}
             onDateChange={handleDateChange}
             onSaveBudgetSettings={handleSaveBudgetSettings}
             onLogout={handleLogout}

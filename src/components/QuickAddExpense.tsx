@@ -1,18 +1,41 @@
 import React, { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, AlertTriangle } from 'lucide-react';
 import { Budget } from '../types';
 
 interface QuickAddExpenseProps {
   budgets: Budget[];
   onExpenseAdded: (merchant: string, amount: number, categoryId: number) => void;
+  onRequestRebalance?: () => void;
 }
 
-export default function QuickAddExpense({ budgets, onExpenseAdded }: QuickAddExpenseProps) {
+export default function QuickAddExpense({ budgets, onExpenseAdded, onRequestRebalance }: QuickAddExpenseProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showNudge, setShowNudge] = useState(false);
   const [amount, setAmount] = useState('');
   const [merchant, setMerchant] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [step, setStep] = useState<'amount' | 'details'>('amount');
+
+  const overspent = budgets.filter(b => b.spent > b.budget);
+  const totalOverspend = overspent.reduce((sum, b) => sum + (b.spent - b.budget), 0);
+
+  const handleFabClick = () => {
+    if (overspent.length > 0) {
+      setShowNudge(true);
+    } else {
+      setIsOpen(true);
+    }
+  };
+
+  const handleLogAnyway = () => {
+    setShowNudge(false);
+    setIsOpen(true);
+  };
+
+  const handleFixNow = () => {
+    setShowNudge(false);
+    if (onRequestRebalance) onRequestRebalance();
+  };
 
   const reset = () => {
     setAmount('');
@@ -20,6 +43,7 @@ export default function QuickAddExpense({ budgets, onExpenseAdded }: QuickAddExp
     setCategoryId('');
     setStep('amount');
     setIsOpen(false);
+    setShowNudge(false);
   };
 
   const handleAmountNext = () => {
@@ -46,7 +70,7 @@ export default function QuickAddExpense({ budgets, onExpenseAdded }: QuickAddExp
     <>
       {/* FAB Button */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={handleFabClick}
         style={{
           position: 'fixed',
           bottom: '88px',
@@ -256,6 +280,40 @@ export default function QuickAddExpense({ budgets, onExpenseAdded }: QuickAddExp
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Overspend Nudge */}
+      {showNudge && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+          <div onClick={reset} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', animation: 'fadeIn 200ms ease' }} />
+          <div style={{ position: 'relative', background: 'var(--amex-white)', borderRadius: 'var(--amex-radius-2xl) var(--amex-radius-2xl) 0 0', padding: 'var(--amex-space-6)', animation: 'slideUp 250ms ease' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--amex-space-4)' }}>
+              <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: 'var(--amex-gray-300)' }} />
+            </div>
+
+            <div style={{ textAlign: 'center', marginBottom: 'var(--amex-space-5)' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto var(--amex-space-3)' }}>
+                <AlertTriangle style={{ width: '28px', height: '28px', color: 'var(--amex-red)' }} />
+              </div>
+              <h2 style={{ fontSize: 'var(--amex-font-size-xl)', fontWeight: 'var(--amex-font-weight-bold)', color: 'var(--amex-gray-900)', marginBottom: 'var(--amex-space-2)' }}>
+                Budget Alert
+              </h2>
+              <p style={{ fontSize: 'var(--amex-font-size-sm)', color: 'var(--amex-gray-600)', lineHeight: 1.5 }}>
+                You're <strong style={{ color: 'var(--amex-red)' }}>R{totalOverspend.toLocaleString()}</strong> over budget in {overspent.length} categor{overspent.length > 1 ? 'ies' : 'y'}. Fix it before adding more?
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--amex-space-3)' }}>
+              {onRequestRebalance && (
+                <button onClick={handleFixNow} className="amex-btn amex-btn-primary" style={{ width: '100%' }}>
+                  Fix Now
+                </button>
+              )}
+              <button onClick={handleLogAnyway} className="amex-btn amex-btn-secondary" style={{ width: '100%' }}>
+                Log Anyway
+              </button>
+            </div>
           </div>
         </div>
       )}

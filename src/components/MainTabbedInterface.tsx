@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { TrendingUp, Receipt, User } from 'lucide-react';
+import { Home, Receipt, User } from 'lucide-react';
+import TodayView from './TodayView';
 import AmexProgressTab from './AmexProgressTab';
 import ExpenseOverview from './ExpenseOverview';
 import UserProfile from './UserProfile';
 import QuickAddExpense from './QuickAddExpense';
+import RebalanceSheet from './RebalanceSheet';
 import { Budget } from '../types';
 
 interface MainTabbedInterfaceProps {
@@ -23,6 +25,7 @@ interface MainTabbedInterfaceProps {
   onRemoveSpend: (budgetId: number) => void;
   onUpdateSavings: (amount: number) => void;
   onUpdateIncome: (amount: number) => void;
+  onRebalance: (fromId: number | string, toId: number | string, amount: number) => void;
   onDateChange: (date: Date) => void;
   onSaveBudgetSettings: (budgets: Budget[]) => void;
   onLogout: () => void;
@@ -45,27 +48,27 @@ export default function MainTabbedInterface({
   onRemoveSpend,
   onUpdateSavings,
   onUpdateIncome,
+  onRebalance,
   onDateChange,
   onSaveBudgetSettings,
   onLogout
 }: MainTabbedInterfaceProps) {
   const [activeTab, setActiveTab] = useState(0);
+  const [showMonthSummary, setShowMonthSummary] = useState(false);
+  const [showFabRebalance, setShowFabRebalance] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const tabs = [
-    { id: 0, name: 'Home', icon: TrendingUp },
+    { id: 0, name: 'Home', icon: Home },
     { id: 1, name: 'Expenses', icon: Receipt },
     { id: 2, name: 'Profile', icon: User }
   ];
 
-  // Handle touch events for swiping
   const handleTouchStart = (e: React.TouchEvent) => {
     const target = e.target as HTMLElement;
-    if (target.closest('button, input, select, textarea, a')) {
-      return;
-    }
+    if (target.closest('button, input, select, textarea, a')) return;
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
@@ -78,23 +81,26 @@ export default function MainTabbedInterface({
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe && activeTab < tabs.length - 1) {
-      setActiveTab(activeTab + 1);
-    }
-    if (isRightSwipe && activeTab > 0) {
-      setActiveTab(activeTab - 1);
-    }
+    if (distance > 50 && activeTab < tabs.length - 1) setActiveTab(activeTab + 1);
+    if (distance < -50 && activeTab > 0) setActiveTab(activeTab - 1);
     setTouchStart(null);
     setTouchEnd(null);
   };
 
   const renderTabContent = (tabIndex: number) => {
-    switch (tabIndex) {
-      case 0:
-        return (
+    // Show month summary overlay when requested from TodayView
+    if (tabIndex === 0 && showMonthSummary) {
+      return (
+        <div>
+          <div style={{ padding: 'var(--amex-space-4)' }}>
+            <button
+              onClick={() => setShowMonthSummary(false)}
+              className="amex-btn amex-btn-secondary"
+              style={{ marginBottom: 'var(--amex-space-2)' }}
+            >
+              &larr; Back to Today
+            </button>
+          </div>
           <AmexProgressTab
             budgets={monthlyBudgets}
             rebalanceCount={rebalanceCount}
@@ -112,6 +118,25 @@ export default function MainTabbedInterface({
             annualizedExpenses={annualizedExpenses}
             ytdExpenses={ytdExpenses}
             showBudgetBreakdown={false}
+          />
+        </div>
+      );
+    }
+
+    switch (tabIndex) {
+      case 0:
+        return (
+          <TodayView
+            budgets={monthlyBudgets}
+            monthlyIncome={monthlyIncome}
+            monthlySavings={monthlySavings}
+            ytdSavings={ytdSavings}
+            ytdExpenses={ytdExpenses}
+            session={session}
+            onUpdateIncome={onUpdateIncome}
+            onUpdateSavings={onUpdateSavings}
+            onRebalance={onRebalance}
+            onShowMonthSummary={() => setShowMonthSummary(true)}
           />
         );
       case 1:
@@ -139,7 +164,6 @@ export default function MainTabbedInterface({
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--amex-gray-50)' }}>
-      {/* Tab Content */}
       <div
         ref={containerRef}
         style={{ paddingBottom: '72px', minHeight: '100vh' }}
@@ -150,10 +174,23 @@ export default function MainTabbedInterface({
         {renderTabContent(activeTab)}
       </div>
 
-      {/* FAB - Quick Add Expense */}
-      <QuickAddExpense budgets={monthlyBudgets} onExpenseAdded={onExpenseAdded} />
+      {/* FAB */}
+      <QuickAddExpense
+        budgets={monthlyBudgets}
+        onExpenseAdded={onExpenseAdded}
+        onRequestRebalance={() => setShowFabRebalance(true)}
+      />
 
-      {/* Bottom Navigation - Amex Style */}
+      {/* FAB-triggered rebalance sheet */}
+      {showFabRebalance && (
+        <RebalanceSheet
+          budgets={monthlyBudgets}
+          onRebalance={onRebalance}
+          onClose={() => setShowFabRebalance(false)}
+        />
+      )}
+
+      {/* Bottom Navigation */}
       <nav className="amex-nav">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -161,7 +198,7 @@ export default function MainTabbedInterface({
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { setActiveTab(tab.id); if (tab.id === 0) setShowMonthSummary(false); }}
               className={`amex-nav-item ${isActive ? 'active' : ''}`}
             >
               <Icon className="amex-nav-icon" />
