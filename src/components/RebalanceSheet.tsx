@@ -42,7 +42,7 @@ export default function RebalanceSheet({ budgets, targetBudget, onRebalance, onC
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--amex-space-5)' }}>
           <h2 style={{ fontSize: 'var(--amex-font-size-xl)', fontWeight: 'var(--amex-font-weight-bold)', color: 'var(--amex-gray-900)' }}>
-            Fix Overspend
+            Restore Balance
           </h2>
           <button onClick={onClose} style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'var(--amex-gray-100)', border: 'none', cursor: 'pointer' }}>
             <X style={{ width: '18px', height: '18px', color: 'var(--amex-gray-600)' }} />
@@ -54,7 +54,7 @@ export default function RebalanceSheet({ budgets, targetBudget, onRebalance, onC
             {/* Target: overspent category */}
             {overspent.length > 0 && (
               <div style={{ marginBottom: 'var(--amex-space-5)' }}>
-                <label className="amex-label">Overspent category</label>
+                <label className="amex-label">Category to restore</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--amex-space-2)' }}>
                   {overspent.map(b => (
                     <button
@@ -170,7 +170,7 @@ export default function RebalanceSheet({ budgets, targetBudget, onRebalance, onC
                 className="amex-btn amex-btn-primary"
                 style={{ flex: 2, opacity: (!amount || parseFloat(amount) <= 0) ? 0.5 : 1 }}
               >
-                Rebalance
+                Restore
               </button>
             </div>
           </>

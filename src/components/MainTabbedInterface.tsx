@@ -6,6 +6,7 @@ import ExpenseOverview from './ExpenseOverview';
 import UserProfile from './UserProfile';
 import QuickAddExpense from './QuickAddExpense';
 import RebalanceSheet from './RebalanceSheet';
+import DailyCheckIn from './DailyCheckIn';
 import { Budget } from '../types';
 
 interface MainTabbedInterfaceProps {
@@ -19,6 +20,9 @@ interface MainTabbedInterfaceProps {
   annualizedExpenses: number;
   ytdExpenses: number;
   session: any;
+  streak: number;
+  showDailyCheckIn: boolean;
+  onCheckInComplete: () => void;
   onExpenseAdded: (merchant: string, amount: number, categoryId: number) => void;
   onManageBudget: () => void;
   onAddSpend: (budgetId: number) => void;
@@ -42,6 +46,9 @@ export default function MainTabbedInterface({
   annualizedExpenses,
   ytdExpenses,
   session,
+  streak,
+  showDailyCheckIn,
+  onCheckInComplete,
   onExpenseAdded,
   onManageBudget,
   onAddSpend,
@@ -56,6 +63,7 @@ export default function MainTabbedInterface({
   const [activeTab, setActiveTab] = useState(0);
   const [showMonthSummary, setShowMonthSummary] = useState(false);
   const [showFabRebalance, setShowFabRebalance] = useState(false);
+  const [showCheckInRebalance, setShowCheckInRebalance] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -137,6 +145,7 @@ export default function MainTabbedInterface({
             onUpdateSavings={onUpdateSavings}
             onRebalance={onRebalance}
             onShowMonthSummary={() => setShowMonthSummary(true)}
+            streak={streak}
           />
         );
       case 1:
@@ -207,6 +216,30 @@ export default function MainTabbedInterface({
           );
         })}
       </nav>
+
+      {/* Daily Check-In overlay */}
+      {showDailyCheckIn && (
+        <DailyCheckIn
+          budgets={monthlyBudgets}
+          monthlyIncome={monthlyIncome}
+          session={session}
+          streak={streak}
+          onComplete={onCheckInComplete}
+          onRestoreBalance={() => {
+            onCheckInComplete();
+            setShowCheckInRebalance(true);
+          }}
+        />
+      )}
+
+      {/* Check-in triggered rebalance */}
+      {showCheckInRebalance && (
+        <RebalanceSheet
+          budgets={monthlyBudgets}
+          onRebalance={onRebalance}
+          onClose={() => setShowCheckInRebalance(false)}
+        />
+      )}
     </div>
   );
 }

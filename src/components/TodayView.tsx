@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Wallet, ChevronRight, Calendar, TrendingDown } from 'lucide-react';
+import { AlertTriangle, Wallet, ChevronRight, Calendar, Flame } from 'lucide-react';
 import { Budget } from '../types';
 import { supabase } from '../supabaseClient';
 import InlineAmountInput from './InlineAmountInput';
@@ -24,6 +24,7 @@ interface TodayViewProps {
   onUpdateSavings: (amount: number) => void;
   onRebalance: (fromId: number | string, toId: number | string, amount: number) => void;
   onShowMonthSummary: () => void;
+  streak?: number;
 }
 
 export default function TodayView({
@@ -37,6 +38,7 @@ export default function TodayView({
   onUpdateSavings,
   onRebalance,
   onShowMonthSummary,
+  streak = 0,
 }: TodayViewProps) {
   const [userName, setUserName] = useState('User');
   const [todayExpenses, setTodayExpenses] = useState<TodayExpense[]>([]);
@@ -118,7 +120,14 @@ export default function TodayView({
       <div className="amex-header">
         <div className="amex-header-greeting">{greeting}</div>
         <div className="amex-header-name">{userName}</div>
-        <div style={{ fontSize: 'var(--amex-font-size-sm)', opacity: 0.85, marginTop: 'var(--amex-space-1)' }}>{todayStr}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--amex-space-3)', marginTop: 'var(--amex-space-1)' }}>
+          <span style={{ fontSize: 'var(--amex-font-size-sm)', opacity: 0.85 }}>{todayStr}</span>
+          {streak > 0 && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 10px', borderRadius: 'var(--amex-radius-full)', background: 'rgba(255,255,255,0.2)', fontSize: 'var(--amex-font-size-xs)', fontWeight: 'var(--amex-font-weight-bold)' }}>
+              <Flame style={{ width: '12px', height: '12px' }} />{streak} day streak
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="amex-content">
@@ -156,10 +165,10 @@ export default function TodayView({
               <AlertTriangle style={{ width: '24px', height: '24px', color: 'var(--amex-red)', flexShrink: 0 }} />
               <div>
                 <div style={{ fontWeight: 'var(--amex-font-weight-bold)', color: 'var(--amex-red)', fontSize: 'var(--amex-font-size-base)' }}>
-                  {overspentBudgets.length} budget{overspentBudgets.length > 1 ? 's' : ''} overspent
+                  {overspentBudgets.length} budget{overspentBudgets.length > 1 ? 's' : ''} need attention
                 </div>
                 <div style={{ fontSize: 'var(--amex-font-size-xs)', color: 'var(--amex-gray-600)' }}>
-                  R{totalOverspend.toLocaleString()} over total
+                  R{totalOverspend.toLocaleString()} to restore
                 </div>
               </div>
             </div>
@@ -171,7 +180,7 @@ export default function TodayView({
                   <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--amex-space-3)', background: 'white', borderRadius: 'var(--amex-radius-lg)' }}>
                     <div>
                       <div style={{ fontWeight: 'var(--amex-font-weight-semibold)', fontSize: 'var(--amex-font-size-sm)' }}>{b.name}</div>
-                      <div style={{ fontSize: 'var(--amex-font-size-xs)', color: 'var(--amex-red)' }}>R{over.toLocaleString()} over budget</div>
+                      <div style={{ fontSize: 'var(--amex-font-size-xs)', color: 'var(--amex-red)' }}>R{over.toLocaleString()} over — adjust your plan</div>
                     </div>
                     <button
                       onClick={() => handleFixCategory(b)}
@@ -187,7 +196,7 @@ export default function TodayView({
                         fontFamily: 'var(--amex-font-family)',
                       }}
                     >
-                      Fix It
+                      Restore
                     </button>
                   </div>
                 );

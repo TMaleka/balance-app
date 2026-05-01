@@ -35,6 +35,8 @@ function App() {
   const [annualizedExpenses, setAnnualizedExpenses] = useState(0);
   const [ytdExpenses, setYtdExpenses] = useState(0);
   const [monthlyIncome, setMonthlyIncome] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [showDailyCheckIn, setShowDailyCheckIn] = useState(false);
 
   const isFirstTime = !isLoading && budgets.length === 0;
 
@@ -215,6 +217,63 @@ function App() {
   useEffect(() => {
     fetchData();
   }, [session, selectedDate, fetchData]);
+
+  // Fetch streak and determine if daily check-in should show
+  useEffect(() => {
+    const fetchStreakAndCheckIn = async () => {
+      if (!session?.user?.id) return;
+      const today = new Date().toISOString().substring(0, 10);
+
+      // Check if already checked in today
+      const { data: todayCheckIn } = await supabase
+        .from('daily_checkins')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('check_date', today)
+        .maybeSingle();
+
+      if (!todayCheckIn) {
+        setShowDailyCheckIn(true);
+      }
+
+      // Calculate streak: count consecutive days with check-ins going backwards from yesterday
+      const { data: checkIns } = await supabase
+        .from('daily_checkins')
+        .select('check_date')
+        .eq('user_id', session.user.id)
+        .order('check_date', { ascending: false })
+        .limit(60);
+
+      if (checkIns && checkIns.length > 0) {
+        let currentStreak = 0;
+        const checkDates = new Set(checkIns.map(c => c.check_date));
+
+        // If checked in today, count today
+        if (checkDates.has(today)) currentStreak = 1;
+
+        // Walk backwards from yesterday
+        const d = new Date();
+        d.setDate(d.getDate() - (checkDates.has(today) ? 1 : 0));
+        for (let i = 0; i < 60; i++) {
+          const dateStr = d.toISOString().substring(0, 10);
+          if (checkDates.has(dateStr)) {
+            currentStreak++;
+            d.setDate(d.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+        setStreak(currentStreak);
+      }
+    };
+    fetchStreakAndCheckIn();
+  }, [session, monthlyBudgets]);
+
+  const handleCheckInComplete = () => {
+    setShowDailyCheckIn(false);
+    // Refresh streak
+    setStreak(prev => prev + 1);
+  };
 
   useEffect(() => {
     if (!currentExpense || monthlyBudgets.length === 0) {
@@ -599,6 +658,9 @@ function App() {
             annualizedExpenses={annualizedExpenses}
             ytdExpenses={ytdExpenses}
             session={session}
+            streak={streak}
+            showDailyCheckIn={showDailyCheckIn}
+            onCheckInComplete={handleCheckInComplete}
             onExpenseAdded={handleExpenseAdded}
             onManageBudget={handleManageBudget}
             onAddSpend={handleManualAddSpend}

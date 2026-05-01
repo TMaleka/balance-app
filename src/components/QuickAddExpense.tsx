@@ -297,21 +297,21 @@ export default function QuickAddExpense({ budgets, onExpenseAdded, onRequestReba
                 <AlertTriangle style={{ width: '28px', height: '28px', color: 'var(--amex-red)' }} />
               </div>
               <h2 style={{ fontSize: 'var(--amex-font-size-xl)', fontWeight: 'var(--amex-font-weight-bold)', color: 'var(--amex-gray-900)', marginBottom: 'var(--amex-space-2)' }}>
-                Budget Alert
+                Stay in Control
               </h2>
               <p style={{ fontSize: 'var(--amex-font-size-sm)', color: 'var(--amex-gray-600)', lineHeight: 1.5 }}>
-                You're <strong style={{ color: 'var(--amex-red)' }}>R{totalOverspend.toLocaleString()}</strong> over budget in {overspent.length} categor{overspent.length > 1 ? 'ies' : 'y'}. Fix it before adding more?
+                You're <strong style={{ color: 'var(--amex-red)' }}>R{totalOverspend.toLocaleString()}</strong> over in {overspent.length} categor{overspent.length > 1 ? 'ies' : 'y'}. Restore balance before adding more?
               </p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--amex-space-3)' }}>
               {onRequestRebalance && (
                 <button onClick={handleFixNow} className="amex-btn amex-btn-primary" style={{ width: '100%' }}>
-                  Fix Now
+                  Restore Balance
                 </button>
               )}
               <button onClick={handleLogAnyway} className="amex-btn amex-btn-secondary" style={{ width: '100%' }}>
-                Log Anyway
+                Continue Without Fixing
               </button>
             </div>
           </div>
