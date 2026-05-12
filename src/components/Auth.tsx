@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useNotificationHelpers } from './NotificationSystem';
-import { safeAsync, getUserMessage } from '../utils/errorHandling';
+// errorHandling utils available if needed
 import BalanceLogo from '../assets/BalanceLogo';
 
 export default function Auth() {
@@ -92,7 +92,7 @@ export default function Auth() {
     setError(null);
     setMessage(null);
 
-    const result = await safeAsync(async () => {
+    try {
       let response;
       if (isSignUp) {
         response = await supabase.auth.signUp({ 
@@ -105,31 +105,22 @@ export default function Auth() {
           }
         });
         if (response.error) throw response.error;
-        
-        return { type: 'signup', data: response.data };
+        showSuccess('Account Created', 'Welcome to Balance! Your account is ready.');
       } else {
         response = await supabase.auth.signInWithPassword({ 
           email: trimmedEmail, 
           password: trimmedPassword 
         });
         if (response.error) throw response.error;
-        return { type: 'signin', data: response.data };
-      }
-    }, undefined, 'handleAuth');
-    
-    setLoading(false);
-    
-    if (result) {
-      if (result.type === 'signup') {
-        showSuccess('Account Created', 'Welcome to Balance! Your account is ready.');
-      } else {
         showSuccess('Welcome Back', 'You have been signed in successfully');
       }
-    } else {
-      const errorMessage = getUserMessage('Authentication failed');
-      setError(errorMessage);
-      showError('Authentication Failed', errorMessage);
+    } catch (err: any) {
+      const msg = err?.message || 'Authentication failed. Please try again.';
+      setError(msg);
+      showError('Authentication Failed', msg);
     }
+    
+    setLoading(false);
   };
 
   return (

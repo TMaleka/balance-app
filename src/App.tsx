@@ -59,7 +59,7 @@ function App() {
     if (budgetsError || !budgetsData) {
       console.error("CRITICAL: Could not fetch budgets.", budgetsError);
       setIsLoading(false);
-      return;
+      return [];
     }
 
     // --- Step 1a: Hard deduplication of categories by name ---
@@ -225,12 +225,19 @@ function App() {
       const today = new Date().toISOString().substring(0, 10);
 
       // Check if already checked in today
-      const { data: todayCheckIn } = await supabase
+      const { data: todayCheckIn, error: checkInError } = await supabase
         .from('daily_checkins')
         .select('id')
         .eq('user_id', session.user.id)
         .eq('check_date', today)
         .maybeSingle();
+
+      // If the table doesn't exist or query fails, skip daily check-in feature gracefully
+      if (checkInError) {
+        console.warn('[DailyCheckIn] Table may not exist yet, skipping:', checkInError.message);
+        setShowDailyCheckIn(false);
+        return;
+      }
 
       if (!todayCheckIn) {
         setShowDailyCheckIn(true);
@@ -294,12 +301,14 @@ function App() {
 
 
   const handleOnboardingComplete = useCallback(async (customBudgets: Omit<Budget, 'id' | 'spent'>[]) => {
-    if (!session) return;
+    if (!session) throw new Error('Not signed in. Please refresh and try again.');
     const budgetsToInsert = customBudgets.map(b => ({ ...b, spent: 0, user_id: session.user.id }));
     const { data, error } = await supabase.from('budgets').insert(budgetsToInsert).select();
     if (error) {
       console.error('Error saving budgets:', error);
-    } else if (data) {
+      throw new Error(error.message || 'Could not save budgets. Please try again.');
+    }
+    if (data) {
       setBudgets(data);
     }
   }, [session]);
@@ -331,7 +340,7 @@ function App() {
     const updatedBudgets = await fetchData();
     
     // Check if any budget is overspent after this expense
-    const overspent = updatedBudgets.find(b => b.spent > b.budget);
+    const overspent = updatedBudgets?.find(b => b.spent > b.budget);
     if (overspent) {
       setOverspentBudget(overspent);
       setRebalanceAmount(overspent.spent - overspent.budget);

@@ -4,7 +4,7 @@ import { Budget } from '../types';
 import BalanceLogo from '../assets/BalanceLogo';
 
 interface AmexOnboardingFlowProps {
-  onComplete: (budgets: Omit<Budget, 'id' | 'spent'>[]) => void;
+  onComplete: (budgets: Omit<Budget, 'id' | 'spent'>[]) => Promise<void> | void;
 }
 
 const INTENT_OPTIONS = [
@@ -62,6 +62,8 @@ export default function AmexOnboardingFlow({ onComplete }: AmexOnboardingFlowPro
   ]);
   const [budgets, setBudgets] = useState<Omit<Budget, 'id' | 'spent'>[]>([]);
   const [showBudgets, setShowBudgets] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const spendMidpoint = SPEND_RANGES.find(r => r.id === spendRange)?.midpoint || 7500;
 
@@ -96,7 +98,7 @@ export default function AmexOnboardingFlow({ onComplete }: AmexOnboardingFlowPro
     }, 150);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // Persist intent + range to localStorage before leaving step 1
     if (step === 1) {
       try {
@@ -112,7 +114,14 @@ export default function AmexOnboardingFlow({ onComplete }: AmexOnboardingFlowPro
     if (step < TOTAL_STEPS - 1) {
       animateTo(step + 1);
     } else {
-      onComplete(budgets);
+      setSaving(true);
+      setSaveError(null);
+      try {
+        await onComplete(budgets);
+      } catch (err: any) {
+        setSaveError(err?.message || 'Could not save your budget. Please try again.');
+        setSaving(false);
+      }
     }
   };
 
@@ -120,11 +129,18 @@ export default function AmexOnboardingFlow({ onComplete }: AmexOnboardingFlowPro
     if (step > 0) animateTo(step - 1);
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     // Skip directly to completion with default budgets
     const defaults = generateBudgets(selectedCategories, spendMidpoint);
     setBudgets(defaults);
-    onComplete(defaults);
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await onComplete(defaults);
+    } catch (err: any) {
+      setSaveError(err?.message || 'Could not save your budget. Please try again.');
+      setSaving(false);
+    }
   };
 
   const canProceed = (): boolean => {
@@ -376,24 +392,29 @@ export default function AmexOnboardingFlow({ onComplete }: AmexOnboardingFlowPro
 
         {/* Navigation */}
         <div style={{ flexShrink: 0, marginTop: 'var(--amex-space-4)' }}>
+          {saveError && (
+            <div style={{ background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.3)', borderRadius: 'var(--amex-radius-md)', padding: 'var(--amex-space-3)', marginBottom: 'var(--amex-space-3)', textAlign: 'center' }}>
+              <p style={{ fontSize: 'var(--amex-font-size-sm)', color: 'var(--amex-red)', fontFamily: 'var(--amex-font-family)' }}>{saveError}</p>
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 'var(--amex-space-4)' }}>
             {step > 0 && (
-              <button onClick={handleBack} className="amex-btn amex-btn-secondary" style={{ flex: 1 }}>
+              <button onClick={handleBack} disabled={saving} className="amex-btn amex-btn-secondary" style={{ flex: 1, opacity: saving ? 0.5 : 1 }}>
                 Back
               </button>
             )}
             <button
               onClick={step === 2 && !showBudgets && selectedCategories.length >= 3 ? genBudgets : handleNext}
-              disabled={step === 2 && !showBudgets ? selectedCategories.length < 3 : !canProceed()}
+              disabled={saving || (step === 2 && !showBudgets ? selectedCategories.length < 3 : !canProceed())}
               className="amex-btn amex-btn-primary"
               style={{
                 flex: step > 0 ? 2 : 1,
                 background: 'linear-gradient(135deg, var(--amex-blue) 0%, var(--amex-blue-dark) 100%)',
-                opacity: (step === 2 && !showBudgets ? selectedCategories.length >= 3 : canProceed()) ? 1 : 0.5,
-                cursor: (step === 2 && !showBudgets ? selectedCategories.length >= 3 : canProceed()) ? 'pointer' : 'not-allowed',
+                opacity: saving ? 0.7 : (step === 2 && !showBudgets ? selectedCategories.length >= 3 : canProceed()) ? 1 : 0.5,
+                cursor: saving ? 'wait' : (step === 2 && !showBudgets ? selectedCategories.length >= 3 : canProceed()) ? 'pointer' : 'not-allowed',
               }}
             >
-              {ctaLabel()}
+              {saving ? 'Saving...' : ctaLabel()}
             </button>
           </div>
           {/* Skip link */}
