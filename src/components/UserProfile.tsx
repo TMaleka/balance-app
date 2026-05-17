@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Calendar, Shield, LogOut, Edit3, Save, X, Key, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Settings } from 'lucide-react';
+import { User, Mail, Calendar, Shield, LogOut, Edit3, Save, X, Key, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Settings, Trash2 } from 'lucide-react';
 import { Budget } from '../types';
 import AmexBudgetSettings from './AmexBudgetSettings';
 import { supabase } from '../supabaseClient';
@@ -35,6 +35,7 @@ export default function UserProfile({ session, onLogout, budgets, onSaveBudgetSe
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [showBudgetSettings, setShowBudgetSettings] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const { showSuccess, showError, showWarning } = useNotificationHelpers();
   
   const [fullName, setFullName] = useState('');
@@ -493,6 +494,47 @@ export default function UserProfile({ session, onLogout, budgets, onSaveBudgetSe
             </div>
           </div>
         )}
+      </div>
+
+      {/* Reset Account (for testing) */}
+      <div className="amex-card">
+        <h4 className="amex-card-title" style={{ marginBottom: 'var(--amex-space-4)' }}>Reset Account</h4>
+        <p className="amex-card-subtitle" style={{ marginBottom: 'var(--amex-space-4)' }}>
+          Delete all your budgets, expenses, and data. You will be taken back to the onboarding screen.
+        </p>
+        <button
+          onClick={async () => {
+            const confirmed = window.confirm('This will delete ALL your budgets, expenses, savings, and check-in data. Are you sure?');
+            if (!confirmed) return;
+            setResetting(true);
+            try {
+              const uid = session.user.id;
+              await supabase.from('expenses').delete().eq('user_id', uid);
+              await supabase.from('budgets').delete().eq('user_id', uid);
+              await supabase.from('monthly_savings').delete().eq('user_id', uid);
+              await supabase.from('monthly_income').delete().eq('user_id', uid);
+              await supabase.from('daily_checkins').delete().eq('user_id', uid);
+              localStorage.removeItem('balance_onboarding_intent');
+              localStorage.removeItem('balance_onboarding_spend_range');
+              showSuccess('Account Reset', 'All data cleared. Reloading...');
+              setTimeout(() => window.location.reload(), 1000);
+            } catch (err: any) {
+              showError('Reset Failed', err?.message || 'Could not reset account.');
+              setResetting(false);
+            }
+          }}
+          disabled={resetting}
+          className="amex-btn"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 'var(--amex-space-2)',
+            background: 'var(--amex-red-light)', color: 'var(--amex-red)',
+            border: '1px solid var(--amex-red)', cursor: resetting ? 'wait' : 'pointer',
+            opacity: resetting ? 0.6 : 1,
+          }}
+        >
+          <Trash2 style={{ width: 16, height: 16 }} />
+          {resetting ? 'Resetting...' : 'Reset All Data'}
+        </button>
       </div>
     </div>
   );
