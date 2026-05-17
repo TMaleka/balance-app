@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AmexOnboardingFlow from './components/AmexOnboardingFlow';
 import FixItScreen from './components/FixItScreen';
-import RebalanceScreen from './components/RebalanceScreen';
+import RebalanceSheet from './components/RebalanceSheet';
 import SuccessScreen from './components/SuccessScreen';
 import MainTabbedInterface from './components/MainTabbedInterface';
 import GeneralRebalanceScreen from './components/GeneralRebalanceScreen';
@@ -649,7 +649,17 @@ function App() {
       case 'fixIt':
         return overspentBudget && <FixItScreen budget={overspentBudget} expense={currentExpense} overspentAmount={rebalanceAmount} onRebalance={handleRebalance} onBack={handleBackToTabs} />;
       case 'rebalance':
-        return overspentBudget && <RebalanceScreen budgets={monthlyBudgets} overspentBudget={overspentBudget} overspentAmount={rebalanceAmount} onConfirm={handleRebalanceConfirm} onBack={() => setView('fixIt')} />;
+        return overspentBudget && (
+          <RebalanceSheet
+            budgets={monthlyBudgets}
+            targetBudget={overspentBudget}
+            onRebalance={async (fromId, toId, amount) => {
+              await handleQuickRebalance(fromId, toId, amount);
+              setView('success');
+            }}
+            onClose={() => setView('fixIt')}
+          />
+        );
       case 'success':
         return <SuccessScreen onBack={handleBackToTabs} />;
       case 'generalRebalance':
