@@ -509,11 +509,22 @@ export default function UserProfile({ session, onLogout, budgets, onSaveBudgetSe
             setResetting(true);
             try {
               const uid = session.user.id;
-              await supabase.from('expenses').delete().eq('user_id', uid);
-              await supabase.from('budgets').delete().eq('user_id', uid);
-              await supabase.from('monthly_savings').delete().eq('user_id', uid);
-              await supabase.from('monthly_income').delete().eq('user_id', uid);
-              await supabase.from('daily_checkins').delete().eq('user_id', uid);
+              // Delete in dependency order (expenses reference budgets)
+              const tables = ['expenses', 'daily_checkins', 'monthly_savings', 'monthly_income', 'budgets'] as const;
+              for (const table of tables) {
+                const { error } = await supabase.from(table).delete().eq('user_id', uid);
+                if (error) console.warn(`[Reset] ${table} delete error:`, error.message);
+              }
+              // Verify budgets are actually gone
+              const { data: remaining } = await supabase.from('budgets').select('id').eq('user_id', uid);
+              if (remaining && remaining.length > 0) {
+                showError(
+                  'Delete Blocked by Database',
+                  'Your Supabase "budgets" table is missing a DELETE policy. Run this in the Supabase SQL Editor: CREATE POLICY "Users can delete own budgets" ON budgets FOR DELETE USING (auth.uid() = user_id);'
+                );
+                setResetting(false);
+                return;
+              }
               localStorage.removeItem('balance_onboarding_intent');
               localStorage.removeItem('balance_onboarding_spend_range');
               showSuccess('Account Reset', 'All data cleared. Reloading...');
