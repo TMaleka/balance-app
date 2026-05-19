@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Shield, Flame, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Budget } from '../types';
 import { supabase } from '../supabaseClient';
+import { trackCheckIn } from '../utils/betaTracking';
 
 type StatusLevel = 'green' | 'amber' | 'red';
 
@@ -80,6 +81,8 @@ export default function DailyCheckIn({
   const handleCheckIn = async () => {
     setIsCheckedIn(true);
     await saveCheckIn();
+    const isFirst = streak === 0;
+    trackCheckIn(status, streak + 1, isFirst);
     setTimeout(() => onComplete(), 600);
   };
 

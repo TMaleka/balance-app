@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AmexOnboardingFlow from './components/AmexOnboardingFlow';
 import FixItScreen from './components/FixItScreen';
 import RebalanceSheet from './components/RebalanceSheet';
@@ -7,6 +7,8 @@ import MainTabbedInterface from './components/MainTabbedInterface';
 import GeneralRebalanceScreen from './components/GeneralRebalanceScreen';
 import Auth from './components/Auth';
 import LoadingScreen from './components/LoadingScreen';
+import ErrorBoundary from './components/ErrorBoundary';
+import OfflineBanner from './components/OfflineBanner';
 import { Budget, Expense } from './types';
 import { supabase } from './supabaseClient';
 import { Session } from '@supabase/supabase-js';
@@ -16,6 +18,7 @@ import { errorLogger, setUserId } from './utils/errorLogging';
 import { performanceMonitor } from './utils/performanceMonitoring';
 import { analytics, setAnalyticsUserId, trackPageView } from './utils/analytics';
 import { envConfigErrors } from './config/environment';
+import { setBetaUserId, startBetaSession, detectChurnRisk, trackOnboardingComplete, trackExpense, trackOverspend, trackFixIt, track as betaTrack, flushLocalEvents } from './utils/betaTracking';
 import './styles/amex-design.css';
 
 function App() {
@@ -39,6 +42,7 @@ function App() {
   const [showDailyCheckIn, setShowDailyCheckIn] = useState(false);
 
   const isFirstTime = !isLoading && budgets.length === 0;
+  const onboardingTracked = useRef(false);
 
   const fetchData = useCallback(async (): Promise<Budget[]> => {
     // If there is no user session, do nothing.
@@ -194,6 +198,10 @@ function App() {
       if (session?.user) {
         setUserId(session.user.id);
         setAnalyticsUserId(session.user.id);
+        setBetaUserId(session.user.id);
+        startBetaSession();
+        detectChurnRisk();
+        flushLocalEvents();
         trackPageView('/app');
       }
     });
@@ -207,6 +215,10 @@ function App() {
       if (session?.user) {
         setUserId(session.user.id);
         setAnalyticsUserId(session.user.id);
+        setBetaUserId(session.user.id);
+        startBetaSession();
+        detectChurnRisk();
+        flushLocalEvents();
         trackPageView('/app');
       }
     });
@@ -310,6 +322,7 @@ function App() {
     }
     if (data) {
       setBudgets(data);
+      trackOnboardingComplete(data.length, data.reduce((s, b) => s + b.budget, 0));
     }
   }, [session]);
 
@@ -336,6 +349,11 @@ function App() {
       return;
     }
     
+    // Track expense (detect first expense)
+    const isFirst = budgets.every(b => b.spent === 0);
+    const cat = budgets.find(b => b.id === categoryId);
+    trackExpense(amount, cat?.name || 'unknown', isFirst);
+
     setCurrentExpense(newExpense);
     const updatedBudgets = await fetchData();
     
@@ -344,12 +362,14 @@ function App() {
     if (overspent) {
       setOverspentBudget(overspent);
       setRebalanceAmount(overspent.spent - overspent.budget);
+      trackOverspend(overspent.name, overspent.spent - overspent.budget);
       setView('fixIt');
     }
   };
 
   const handleRebalance = () => {
     if (!overspentBudget) return;
+    trackFixIt('shown');
     setView('rebalance');
   };
 
@@ -370,6 +390,7 @@ function App() {
 
 
   const handleBackToTabs = () => {
+    if (view === 'fixIt') trackFixIt('dismissed');
     setView('tabs');
     setNewExpense(null);
     setCurrentExpense(null);
@@ -643,7 +664,13 @@ function App() {
     }
     if (!session) return <Auth />;
     if (isLoading) return <LoadingScreen />;
-    if (isFirstTime) return <AmexOnboardingFlow onComplete={handleOnboardingComplete} />;
+    if (isFirstTime) {
+      if (!onboardingTracked.current) {
+        onboardingTracked.current = true;
+        betaTrack('onboarding_started');
+      }
+      return <AmexOnboardingFlow onComplete={handleOnboardingComplete} />;
+    }
 
     switch (view) {
       case 'fixIt':
@@ -655,6 +682,8 @@ function App() {
             targetBudget={overspentBudget}
             onRebalance={async (fromId, toId, amount) => {
               await handleQuickRebalance(fromId, toId, amount);
+              trackFixIt('completed');
+              betaTrack('rebalance_completed', { properties: { amount } });
               setView('success');
             }}
             onClose={() => setView('fixIt')}
@@ -696,10 +725,13 @@ function App() {
   };
 
   return (
-    <NotificationProvider>
-      {renderContent()}
-      <SystemHealthMonitor />
-    </NotificationProvider>
+    <ErrorBoundary>
+      <NotificationProvider>
+        <OfflineBanner />
+        {renderContent()}
+        <SystemHealthMonitor />
+      </NotificationProvider>
+    </ErrorBoundary>
   );
 }
 

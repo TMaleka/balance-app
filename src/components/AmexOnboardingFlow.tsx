@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle, Eye, RefreshCw } from 'lucide-react';
 import { Budget } from '../types';
 import BalanceLogo from '../assets/BalanceLogo';
+import { trackOnboardingStep, track } from '../utils/betaTracking';
 
 interface AmexOnboardingFlowProps {
   onComplete: (budgets: Omit<Budget, 'id' | 'spent'>[]) => Promise<void> | void;
@@ -34,6 +35,7 @@ const ALL_CATEGORIES = [
 ];
 
 const TOTAL_STEPS = 5;
+const STEP_NAMES = ['welcome', 'about_you', 'categories', 'budgets', 'ready'];
 
 function generateBudgets(
   selectedCategories: string[],
@@ -112,6 +114,7 @@ export default function AmexOnboardingFlow({ onComplete }: AmexOnboardingFlowPro
       setShowBudgets(true);
     }
     if (step < TOTAL_STEPS - 1) {
+      trackOnboardingStep(step + 1, STEP_NAMES[step + 1] || `step_${step + 1}`);
       animateTo(step + 1);
     } else {
       setSaving(true);
@@ -131,6 +134,7 @@ export default function AmexOnboardingFlow({ onComplete }: AmexOnboardingFlowPro
 
   const handleSkip = async () => {
     // Skip directly to completion with default budgets
+    track('onboarding_skipped', { properties: { skipped_at_step: step } });
     const defaults = generateBudgets(selectedCategories, spendMidpoint);
     setBudgets(defaults);
     setSaving(true);
